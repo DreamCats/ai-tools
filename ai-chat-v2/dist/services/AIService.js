@@ -23,12 +23,22 @@ class AIService {
             name: 'assistant',
             systemPrompt: '你是一个有帮助的助手。'
         };
+        this.systemPrompt = '你是一个有帮助的助手。';
+        this.model = 'gpt-4o-mini';
     }
-    chat(messages, options) {
+    setSystemPrompt(prompt) {
+        this.systemPrompt = prompt;
+    }
+    chat(messages) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('chat', messages, options);
+            // 在消息列表开头添加系统提示词
+            const allMessages = [
+                { role: 'system', content: this.systemPrompt },
+                ...messages
+            ];
+            console.log('chat', allMessages);
             try {
-                const mergedOptions = Object.assign(Object.assign({}, this.defaultOptions), options);
+                const mergedOptions = Object.assign({}, this.defaultOptions);
                 const response = yield fetch(`${this.baseUrl}/chat/completions`, {
                     method: 'POST',
                     headers: {
@@ -37,10 +47,7 @@ class AIService {
                     },
                     body: JSON.stringify({
                         model: mergedOptions.model,
-                        messages: [
-                            { role: 'system', content: this.currentRole.systemPrompt },
-                            ...messages
-                        ],
+                        messages: allMessages,
                         temperature: mergedOptions.temperature,
                         max_tokens: mergedOptions.maxTokens,
                         top_p: mergedOptions.topP,

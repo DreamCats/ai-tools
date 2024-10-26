@@ -13,7 +13,10 @@ exports.ChatView = void 0;
 const AIService_1 = require("../services/AIService");
 const RoleManager_1 = require("../services/RoleManager");
 const ChatHistoryManager_1 = require("../services/ChatHistoryManager");
+const marked_1 = require("marked");
 const marked_config_1 = require("../config/marked.config");
+const RoleConfigDialog_1 = require("../components/RoleConfigDialog");
+const RoleConfigManager_1 = require("../services/RoleConfigManager");
 class ChatView {
     constructor() {
         this.template = `
@@ -73,6 +76,7 @@ class ChatView {
         this.aiService = new AIService_1.AIService('sk-Bd4aUrOoCdd6mYjQ590939B91d4b44Bd95DeF08c8f297385');
         this.roleManager = new RoleManager_1.RoleManager();
         this.chatHistory = new ChatHistoryManager_1.ChatHistoryManager();
+        this.roleConfigDialog = new RoleConfigDialog_1.RoleConfigDialog(() => this.updateRoleSelect());
         // 配置 marked
         (0, marked_config_1.configureMarked)();
     }
@@ -80,8 +84,16 @@ class ChatView {
         this.container = container;
         container.innerHTML = this.template;
         this.bindEvents();
+        // 初始化时更新角色选择列表
+        this.updateRoleSelect();
+        // 设置默认角色的系统提示词
+        const defaultRole = RoleConfigManager_1.RoleConfigManager.getInstance().getRoleConfig('assistant');
+        if (defaultRole) {
+            this.aiService.setSystemPrompt(defaultRole.systemPrompt);
+        }
     }
     bindEvents() {
+        var _a;
         if (!this.container)
             return;
         const sendButton = this.container.querySelector('#sendMessage');
@@ -95,42 +107,46 @@ class ChatView {
             const message = chatInput === null || chatInput === void 0 ? void 0 : chatInput.value.trim();
             if (message) {
                 yield this.handleSendMessage(message);
-                // 清空输入框并重置高度
                 chatInput.value = '';
                 chatInput.style.height = 'auto';
-                // 强制触发输入框的 input 事件以更新状态
                 chatInput.dispatchEvent(new Event('input'));
             }
         });
         sendButton === null || sendButton === void 0 ? void 0 : sendButton.addEventListener('click', sendMessage);
-        // 清除对话
         clearButton === null || clearButton === void 0 ? void 0 : clearButton.addEventListener('click', () => this.handleClearChat());
-        // 导入对话
         importButton === null || importButton === void 0 ? void 0 : importButton.addEventListener('click', () => this.handleImportChat());
-        // 回车发送，Shift+Enter 换行
+        // 删除原来的回车发送事件监听器，只保留一个键盘事件处理
         chatInput === null || chatInput === void 0 ? void 0 : chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault(); // 阻止默认的换行行为
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
                 sendMessage();
             }
         });
-        // 自适应输入框高度
+        // 其他事件监听保持不变...
         chatInput === null || chatInput === void 0 ? void 0 : chatInput.addEventListener('input', () => {
             chatInput.style.height = 'auto';
             chatInput.style.height = chatInput.scrollHeight + 'px';
         });
-        // 角色切换
         roleSelect === null || roleSelect === void 0 ? void 0 : roleSelect.addEventListener('change', (e) => {
             const roleId = e.target.value;
-            const role = this.roleManager.getRole(roleId);
-            if (role) {
-                this.aiService.setRole(role);
+            const roleConfig = RoleConfigManager_1.RoleConfigManager.getInstance().getRoleConfig(roleId);
+            if (roleConfig) {
+                console.log('Switching to role:', roleConfig); // 添加日志
+                this.aiService.setSystemPrompt(roleConfig.systemPrompt);
+                if (confirm('切换角色后，是否要清空当前对话？')) {
+                    this.handleClearChat();
+                }
             }
         });
-        // 模型切换
         modelSelect === null || modelSelect === void 0 ? void 0 : modelSelect.addEventListener('change', (e) => {
             const model = e.target.value;
             this.aiService.updateOptions({ model });
+        });
+        // 修改键盘事件监听
+        chatInput === null || chatInput === void 0 ? void 0 : chatInput.addEventListener('keydown', (e) => this.handleKeyPress(e));
+        const roleConfigBtn = (_a = this.container) === null || _a === void 0 ? void 0 : _a.querySelector('#roleConfig');
+        roleConfigBtn === null || roleConfigBtn === void 0 ? void 0 : roleConfigBtn.addEventListener('click', () => {
+            this.roleConfigDialog.show();
         });
     }
     handleSendMessage(message) {
@@ -180,50 +196,48 @@ class ChatView {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         });
     }
-    formatMarkdownContent(content) {
-        // 1. 移除多余的空行
-        content = content.replace(/\n{3,}/g, '\n\n');
-        // 2. 规范化代码块
-        content = content.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-            code = code.trim();
-            // 确保代码块前后有空行
-            return `\n\`\`\`${lang}\n${code}\n\`\`\`\n`;
-        });
-        // 3. 规范化列表
-        content = content.replace(/^(\s*[-*+])\s+/gm, '$1 ');
-        content = content.replace(/^(\s*\d+\.)\s+/gm, '$1 '); // 有序列表
-        // 4. 规范化标题
-        content = content.replace(/^(#{1,6})\s*(.+?)[\s#]*$/gm, '$1 $2');
-        // 5. 规范化引用
-        content = content.replace(/^(>\s*)+/gm, (match) => {
-            return match.replace(/\s+/g, ' ');
-        });
-        // 6. 规范化表格
-        content = content.replace(/\|\s+/g, '| ').replace(/\s+\|/g, ' |');
-        // 7. 规范化加粗和斜体
-        content = content.replace(/\*\*\s*(.+?)\s*\*\*/g, '**$1**');
-        content = content.replace(/\*\s*(.+?)\s*\*/g, '*$1*');
-        content = content.replace(/__\s*(.+?)\s*__/g, '__$1__');
-        content = content.replace(/_\s*(.+?)\s*_/g, '_$1_');
-        // 8. 处理段落间距
-        content = content.split('\n\n').map(paragraph => {
-            return paragraph.trim();
-        }).filter(Boolean).join('\n\n');
-        return content;
-    }
     renderMessage(container, message) {
         const messageElement = document.createElement('div');
         messageElement.className = `message ${message.role === 'user' ? 'user-message' : 'ai-message'} fade-in`;
-        // 统一处理消息内容，不使用 Markdown 渲染
-        const content = message.content
-            .replace(/\n/g, '<br>')
-            .replace(/ /g, '&nbsp;');
+        let content;
+        if (message.role === 'assistant') {
+            content = (0, marked_1.marked)(message.content);
+        }
+        else {
+            content = message.content
+                .replace(/\n/g, '<br>')
+                .replace(/ /g, '&nbsp;');
+        }
         messageElement.innerHTML = `
-            <div class="message-avatar">
+            <div class="message-avatar" ${message.role === 'assistant' ? 'title="点击复制内容"' : ''}>
                 <span class="material-icons">${message.role === 'user' ? 'person' : 'smart_toy'}</span>
             </div>
             <div class="message-content">${content}</div>
         `;
+        // 为 AI 消息添加复制功能
+        if (message.role === 'assistant') {
+            const avatar = messageElement.querySelector('.message-avatar');
+            avatar === null || avatar === void 0 ? void 0 : avatar.addEventListener('click', () => __awaiter(this, void 0, void 0, function* () {
+                try {
+                    const textContent = message.content;
+                    yield navigator.clipboard.writeText(textContent);
+                    // 更新图标显示复制成功
+                    const icon = avatar.querySelector('.material-icons');
+                    if (icon) {
+                        icon.textContent = 'check';
+                        icon.classList.add('copy-success');
+                        // 2秒后恢复原样
+                        setTimeout(() => {
+                            icon.textContent = 'smart_toy';
+                            icon.classList.remove('copy-success');
+                        }, 2000);
+                    }
+                }
+                catch (err) {
+                    console.error('复制失败:', err);
+                }
+            }));
+        }
         container.appendChild(messageElement);
         container.scrollTop = container.scrollHeight;
     }
@@ -274,6 +288,36 @@ class ChatView {
     destroy() {
         // 清理事件监听
         this.container = null;
+    }
+    handleKeyPress(event) {
+        var _a;
+        const chatInput = (_a = this.container) === null || _a === void 0 ? void 0 : _a.querySelector('#chatInput');
+        if (event.key === 'Enter' && event.altKey) {
+            event.preventDefault(); // 阻止默认行为
+            const message = chatInput === null || chatInput === void 0 ? void 0 : chatInput.value.trim();
+            if (message) {
+                this.handleSendMessage(message);
+                chatInput.value = '';
+                chatInput.style.height = 'auto';
+                chatInput.dispatchEvent(new Event('input'));
+            }
+        }
+        // 普通回车就使用默认的换行行为，不要特殊处理
+    }
+    updateRoleSelect() {
+        var _a;
+        const roleSelect = (_a = this.container) === null || _a === void 0 ? void 0 : _a.querySelector('#roleSelect');
+        if (!roleSelect)
+            return;
+        const roles = RoleConfigManager_1.RoleConfigManager.getInstance().getAllRoles();
+        roleSelect.innerHTML = roles.map(role => `
+            <option value="${role.id}">${role.name}</option>
+        `).join('');
+        // 保持当前选中的角色（如果存在）
+        const currentRole = roleSelect.value;
+        if (currentRole && roles.some(role => role.id === currentRole)) {
+            roleSelect.value = currentRole;
+        }
     }
 }
 exports.ChatView = ChatView;

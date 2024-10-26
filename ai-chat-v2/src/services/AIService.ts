@@ -9,6 +9,8 @@ export class AIService {
         temperature: 0.7,
         maxTokens: 2000,
     };
+    private systemPrompt: string;
+    private model: string;
 
     constructor(apiKey: string) {
         this.apiKey = apiKey;
@@ -16,12 +18,24 @@ export class AIService {
             name: 'assistant',
             systemPrompt: '你是一个有帮助的助手。'
         };
+        this.systemPrompt = '你是一个有帮助的助手。';
+        this.model = 'gpt-4o-mini';
     }
 
-    public async chat(messages: ChatMessage[], options?: Partial<ChatCompletionOptions>): Promise<string> {
-        console.log('chat', messages, options);
+    public setSystemPrompt(prompt: string): void {
+        this.systemPrompt = prompt;
+    }
+
+    public async chat(messages: ChatMessage[]): Promise<string> {
+        // 在消息列表开头添加系统提示词
+        const allMessages = [
+            { role: 'system', content: this.systemPrompt },
+            ...messages
+        ];
+
+        console.log('chat', allMessages);
         try {
-            const mergedOptions = { ...this.defaultOptions, ...options };
+            const mergedOptions = { ...this.defaultOptions };
             const response = await fetch(`${this.baseUrl}/chat/completions`, {
                 method: 'POST',
                 headers: {
@@ -30,10 +44,7 @@ export class AIService {
                 },
                 body: JSON.stringify({
                     model: mergedOptions.model,
-                    messages: [
-                        { role: 'system', content: this.currentRole.systemPrompt },
-                        ...messages
-                    ],
+                    messages: allMessages,
                     temperature: mergedOptions.temperature,
                     max_tokens: mergedOptions.maxTokens,
                     top_p: mergedOptions.topP,
