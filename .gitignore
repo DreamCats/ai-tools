@@ -1,0 +1,31 @@
+# Windows
+[Dd]esktop.ini
+Thumbs.db
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+
+*.pyc
+*.pyo
+*.log
+
+
+node_modules/
+
+# minni
+miniprogram_npm/
+.vscode
+.idea/
+
+
+# db
+db/
+.vscode
+
+./ai-chat-v2/node_modules/
+./ai-chat-v2/dist/*

@@ -1,0 +1,20 @@
+{
+    "name": "smart-editor",
+    "version": "1.0.0",
+    "description": "智能文档编辑器与AI助手",
+    "main": "index.js",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc"
+    },
+    "dependencies": {
+        "marked": "^9.1.0",
+        "highlight.js": "^11.8.0",
+        "utools-helper": "^2.2.0"
+    },
+    "devDependencies": {
+        "@types/marked": "^5.0.1",
+        "@types/node": "^20.8.0",
+        "utools-api-types": "^2.0.3"
+    }
+}

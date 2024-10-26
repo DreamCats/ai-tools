@@ -1,0 +1,24 @@
+{
+    "name": "af0d6a80",
+    "pluginName": "first-ai-chat",
+    "description": "first-ai-chat",
+    "version": "v0.0.1",
+    "main": "dist/index.html",
+    "preload": "dist/preload.js",
+    "author": "DreamCats",
+    "homepage": "https://github.com/DreamCats",
+    "logo": "icon/chat.jpg",
+    "pluginSetting": {
+        "height": 600
+    },
+    "features": [
+        {
+            "code": "cchat",
+            "explain": "cchat",
+            "cmds": [
+                "cchat"
+            ],
+            "icon": "icon/chat.jpg"
+        }
+    ]
+}

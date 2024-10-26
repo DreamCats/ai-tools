@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat & Drawer</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- 添加 Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- 添加 highlight.js 样式 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航 -->
+        <nav class="nav-tabs">
+            <button class="tab-item active" data-tab="chat">AI Chat</button>
+            <button class="tab-item" data-tab="drawer">Drawer</button>
+        </nav>
+
+        <!-- 内容区域 -->
+        <main id="content"></main>
+    </div>
+    <!-- 修改脚本路径 -->
+    <script type="module" src="./dist/preload.js"></script>
+</body>
+</html>
