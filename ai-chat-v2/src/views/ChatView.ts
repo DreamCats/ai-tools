@@ -10,6 +10,9 @@ import { RoleConfigManager } from '../services/RoleConfigManager';
 import { TagSelectDialog } from '../components/TagSelectDialog';
 import { UToolsStorage } from '../services/UToolsStorage';
 import { IStorage } from '../interfaces/storage';  // 从 interfaces 目录导入
+import { ExportService } from '../services/ExportService';
+import { ExportDialog } from '../components/ExportDialog';
+import { ExportOptions } from '../services/ExportService';
 
 export class ChatView implements BaseView {
     private aiService: AIService;
@@ -20,6 +23,8 @@ export class ChatView implements BaseView {
     private storage: IStorage;
     private readonly STORAGE_KEY_ROLE = 'selected_role';
     private readonly STORAGE_KEY_MODEL = 'selected_model';
+    private exportDialog: ExportDialog;
+    private exportService: ExportService;
     
     constructor() {
         this.storage = UToolsStorage.getInstance();
@@ -28,6 +33,8 @@ export class ChatView implements BaseView {
         this.chatHistory = new ChatHistoryManager();
         this.roleConfigDialog = new RoleConfigDialog(() => this.updateRoleSelect());
         this.tagSelectDialog = new TagSelectDialog(this.handleImportContent.bind(this));
+        this.exportService = ExportService.getInstance();
+        this.exportDialog = new ExportDialog(this.handleExport.bind(this));
         
         // 配置 marked
         configureMarked();
@@ -51,6 +58,9 @@ export class ChatView implements BaseView {
                         </span>
                     </div>
                     <div class="chat-actions">
+                        <button id="exportChat" class="icon-btn" title="导出对话">
+                            <span class="material-icons">download</span>
+                        </button>
                         <button id="importChat" class="icon-btn" title="导入对话">
                             <span class="material-icons">upload_file</span>
                         </button>
@@ -138,6 +148,7 @@ export class ChatView implements BaseView {
         const chatInput = this.container.querySelector('#chatInput') as HTMLTextAreaElement;
         const roleSelect = this.container.querySelector('#roleSelect') as HTMLSelectElement;
         const modelSelect = this.container.querySelector('#modelSelect') as HTMLSelectElement;
+        const exportButton = this.container.querySelector('#exportChat');
 
         // 发送消息
         const sendMessage = async () => {
@@ -153,6 +164,9 @@ export class ChatView implements BaseView {
         sendButton?.addEventListener('click', sendMessage);
         clearButton?.addEventListener('click', () => this.handleClearChat());
         importButton?.addEventListener('click', () => this.tagSelectDialog.show());
+        exportButton?.addEventListener('click', () => {
+            this.exportDialog.show();
+        });
 
         // 删除原来的回车发送事件监听器，只保留一个键盘事件处理
         chatInput?.addEventListener('keydown', (e) => {
@@ -313,7 +327,7 @@ export class ChatView implements BaseView {
         // 添加系统消息提示导入成功
         const systemMessage: ChatMessage = {
             role: 'system',
-            content: `已导入 ${content.split('###').length - 1} 条相关内容作为��助信息`
+            content: `已导入 ${content.split('###').length - 1} 条相关内容作为助信息`
         };
         this.renderMessage(messagesContainer, systemMessage);
 
@@ -359,5 +373,9 @@ export class ChatView implements BaseView {
         if (currentRole && roles.some(role => role.id === currentRole)) {
             roleSelect.value = currentRole;
         }
+    }
+
+    private handleExport(options: ExportOptions): void {
+        this.exportService.exportChat(this.chatHistory.getHistory(), options);
     }
 }

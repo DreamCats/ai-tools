@@ -8,8 +8,10 @@
         "build": "tsc"
     },
     "dependencies": {
-        "marked": "^9.1.0",
+        "@types/fs-extra": "^11.0.4",
+        "fs-extra": "^11.2.0",
         "highlight.js": "^11.8.0",
+        "marked": "^9.1.0",
         "utools-helper": "^2.2.0"
     },
     "devDependencies": {

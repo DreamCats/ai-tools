@@ -19,6 +19,8 @@ const RoleConfigDialog_1 = require("../components/RoleConfigDialog");
 const RoleConfigManager_1 = require("../services/RoleConfigManager");
 const TagSelectDialog_1 = require("../components/TagSelectDialog");
 const UToolsStorage_1 = require("../services/UToolsStorage");
+const ExportService_1 = require("../services/ExportService");
+const ExportDialog_1 = require("../components/ExportDialog");
 class ChatView {
     constructor() {
         this.STORAGE_KEY_ROLE = 'selected_role';
@@ -41,6 +43,9 @@ class ChatView {
                         </span>
                     </div>
                     <div class="chat-actions">
+                        <button id="exportChat" class="icon-btn" title="导出对话">
+                            <span class="material-icons">download</span>
+                        </button>
                         <button id="importChat" class="icon-btn" title="导入对话">
                             <span class="material-icons">upload_file</span>
                         </button>
@@ -90,6 +95,8 @@ class ChatView {
         this.chatHistory = new ChatHistoryManager_1.ChatHistoryManager();
         this.roleConfigDialog = new RoleConfigDialog_1.RoleConfigDialog(() => this.updateRoleSelect());
         this.tagSelectDialog = new TagSelectDialog_1.TagSelectDialog(this.handleImportContent.bind(this));
+        this.exportService = ExportService_1.ExportService.getInstance();
+        this.exportDialog = new ExportDialog_1.ExportDialog(this.handleExport.bind(this));
         // 配置 marked
         (0, marked_config_1.configureMarked)();
     }
@@ -133,6 +140,7 @@ class ChatView {
         const chatInput = this.container.querySelector('#chatInput');
         const roleSelect = this.container.querySelector('#roleSelect');
         const modelSelect = this.container.querySelector('#modelSelect');
+        const exportButton = this.container.querySelector('#exportChat');
         // 发送消息
         const sendMessage = () => __awaiter(this, void 0, void 0, function* () {
             const message = chatInput === null || chatInput === void 0 ? void 0 : chatInput.value.trim();
@@ -146,6 +154,9 @@ class ChatView {
         sendButton === null || sendButton === void 0 ? void 0 : sendButton.addEventListener('click', sendMessage);
         clearButton === null || clearButton === void 0 ? void 0 : clearButton.addEventListener('click', () => this.handleClearChat());
         importButton === null || importButton === void 0 ? void 0 : importButton.addEventListener('click', () => this.tagSelectDialog.show());
+        exportButton === null || exportButton === void 0 ? void 0 : exportButton.addEventListener('click', () => {
+            this.exportDialog.show();
+        });
         // 删除原来的回车发送事件监听器，只保留一个键盘事件处理
         chatInput === null || chatInput === void 0 ? void 0 : chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && e.ctrlKey) {
@@ -291,7 +302,7 @@ class ChatView {
         // 添加系统消息提示导入成功
         const systemMessage = {
             role: 'system',
-            content: `已导入 ${content.split('###').length - 1} 条相关内容作为��助信息`
+            content: `已导入 ${content.split('###').length - 1} 条相关内容作为助信息`
         };
         this.renderMessage(messagesContainer, systemMessage);
         // 添加导入的内容作为系统消息
@@ -334,6 +345,9 @@ class ChatView {
         if (currentRole && roles.some(role => role.id === currentRole)) {
             roleSelect.value = currentRole;
         }
+    }
+    handleExport(options) {
+        this.exportService.exportChat(this.chatHistory.getHistory(), options);
     }
 }
 exports.ChatView = ChatView;
