@@ -7,19 +7,27 @@ import { marked } from 'marked';
 import { configureMarked } from '../config/marked.config';
 import { RoleConfigDialog } from '../components/RoleConfigDialog';
 import { RoleConfigManager } from '../services/RoleConfigManager';
+import { TagSelectDialog } from '../components/TagSelectDialog';
+import { UToolsStorage } from '../services/UToolsStorage';
+import { IStorage } from '../interfaces/storage';  // 从 interfaces 目录导入
 
 export class ChatView implements BaseView {
     private aiService: AIService;
     private roleManager: RoleManager;
     private chatHistory: ChatHistoryManager;
     private roleConfigDialog: RoleConfigDialog;
+    private tagSelectDialog: TagSelectDialog;
+    private storage: IStorage;
+    private readonly STORAGE_KEY_ROLE = 'selected_role';
+    private readonly STORAGE_KEY_MODEL = 'selected_model';
     
     constructor() {
-        // 初始化服务
+        this.storage = UToolsStorage.getInstance();
         this.aiService = new AIService('sk-Bd4aUrOoCdd6mYjQ590939B91d4b44Bd95DeF08c8f297385');
         this.roleManager = new RoleManager();
         this.chatHistory = new ChatHistoryManager();
         this.roleConfigDialog = new RoleConfigDialog(() => this.updateRoleSelect());
+        this.tagSelectDialog = new TagSelectDialog(this.handleImportContent.bind(this));
         
         // 配置 marked
         configureMarked();
@@ -35,16 +43,24 @@ export class ChatView implements BaseView {
             <!-- 输入区域 -->
             <div class="chat-input-container">
                 <textarea id="chatInput" placeholder="输入消息..."></textarea>
-                <div class="chat-actions">
-                    <button id="importChat" class="icon-btn" title="导入对话">
-                        <span class="material-icons">upload_file</span>
-                    </button>
-                    <button id="clearChat" class="icon-btn" title="清除对话">
-                        <span class="material-icons">delete_outline</span>
-                    </button>
-                    <button id="sendMessage" class="icon-btn primary" title="发送消息">
-                        <span class="material-icons">send</span>
-                    </button>
+                <div class="chat-bottom-bar">
+                    <div class="chat-hints">
+                        <span class="hint-item">
+                            <span class="material-icons">keyboard</span>
+                            Alt + Enter 发送消息
+                        </span>
+                    </div>
+                    <div class="chat-actions">
+                        <button id="importChat" class="icon-btn" title="导入对话">
+                            <span class="material-icons">upload_file</span>
+                        </button>
+                        <button id="clearChat" class="icon-btn" title="清除对话">
+                            <span class="material-icons">delete_outline</span>
+                        </button>
+                        <button id="sendMessage" class="icon-btn primary" title="发送消息">
+                            <span class="material-icons">send</span>
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -85,13 +101,31 @@ export class ChatView implements BaseView {
         container.innerHTML = this.template;
         this.bindEvents();
         
-        // 初始化时更新角色选择列表
+        // 初始化时更新角色选择列表并恢复上次选择
         this.updateRoleSelect();
-        
-        // 设置默认角色的系统提示词
-        const defaultRole = RoleConfigManager.getInstance().getRoleConfig('assistant');
-        if (defaultRole) {
-            this.aiService.setSystemPrompt(defaultRole.systemPrompt);
+        this.restoreSelections();
+    }
+
+    private restoreSelections(): void {
+        // 恢复角色选择
+        const savedRoleId = this.storage.getItem<string>(this.STORAGE_KEY_ROLE);
+        if (savedRoleId) {
+            const roleSelect = this.container?.querySelector('#roleSelect') as HTMLSelectElement;
+            const roleConfig = RoleConfigManager.getInstance().getRoleConfig(savedRoleId);
+            if (roleSelect && roleConfig) {
+                roleSelect.value = savedRoleId;
+                this.aiService.setSystemPrompt(roleConfig.systemPrompt);
+            }
+        }
+
+        // 恢复模型选择
+        const savedModel = this.storage.getItem<string>(this.STORAGE_KEY_MODEL);
+        if (savedModel) {
+            const modelSelect = this.container?.querySelector('#modelSelect') as HTMLSelectElement;
+            if (modelSelect) {
+                modelSelect.value = savedModel;
+                this.aiService.updateOptions({ model: savedModel });
+            }
         }
     }
 
@@ -118,7 +152,7 @@ export class ChatView implements BaseView {
 
         sendButton?.addEventListener('click', sendMessage);
         clearButton?.addEventListener('click', () => this.handleClearChat());
-        importButton?.addEventListener('click', () => this.handleImportChat());
+        importButton?.addEventListener('click', () => this.tagSelectDialog.show());
 
         // 删除原来的回车发送事件监听器，只保留一个键盘事件处理
         chatInput?.addEventListener('keydown', (e) => {
@@ -138,8 +172,9 @@ export class ChatView implements BaseView {
             const roleId = (e.target as HTMLSelectElement).value;
             const roleConfig = RoleConfigManager.getInstance().getRoleConfig(roleId);
             if (roleConfig) {
-                console.log('Switching to role:', roleConfig); // 添加日志
                 this.aiService.setSystemPrompt(roleConfig.systemPrompt);
+                // 保存选择
+                this.storage.setItem(this.STORAGE_KEY_ROLE, roleId);
                 
                 if (confirm('切换角色后，是否要清空当前对话？')) {
                     this.handleClearChat();
@@ -150,6 +185,8 @@ export class ChatView implements BaseView {
         modelSelect?.addEventListener('change', (e) => {
             const model = (e.target as HTMLSelectElement).value;
             this.aiService.updateOptions({ model });
+            // 保存选择
+            this.storage.setItem(this.STORAGE_KEY_MODEL, model);
         });
 
         // 修改键盘事件监听
@@ -269,40 +306,23 @@ export class ChatView implements BaseView {
         }
     }
 
-    private handleImportChat(): void {
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = '.json';
-        fileInput.style.display = 'none';
-
-        fileInput.addEventListener('change', (e) => {
-            const file = (e.target as HTMLInputElement).files?.[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const content = event.target?.result as string;
-                        this.chatHistory.importHistory(content);
-                        this.refreshChatView();
-                    } catch (error) {
-                        console.error('导入失败:', error);
-                    }
-                };
-                reader.readAsText(file);
-            }
-        });
-
-        fileInput.click();
-    }
-
-    private refreshChatView(): void {
+    private handleImportContent(content: string): void {
         const messagesContainer = this.container?.querySelector('.message-list');
-        if (messagesContainer) {
-            messagesContainer.innerHTML = '';
-            this.chatHistory.getHistory().forEach(message => {
-                this.renderMessage(messagesContainer, message);
-            });
-        }
+        if (!messagesContainer) return;
+
+        // 添加系统消息提示导入成功
+        const systemMessage: ChatMessage = {
+            role: 'system',
+            content: `已导入 ${content.split('###').length - 1} 条相关内容作为��助信息`
+        };
+        this.renderMessage(messagesContainer, systemMessage);
+
+        // 添加导入的内容作为系统消息
+        const importMessage: ChatMessage = {
+            role: 'system',
+            content: content
+        };
+        this.chatHistory.addMessage(importMessage);
     }
 
     public destroy(): void {
