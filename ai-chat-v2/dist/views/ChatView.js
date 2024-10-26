@@ -39,7 +39,7 @@ class ChatView {
                     <div class="chat-hints">
                         <span class="hint-item">
                             <span class="material-icons">keyboard</span>
-                            Alt + Enter 发送消息
+                            Ctrl + Enter 发送消息
                         </span>
                     </div>
                     <div class="chat-actions">
@@ -157,13 +157,13 @@ class ChatView {
         exportButton === null || exportButton === void 0 ? void 0 : exportButton.addEventListener('click', () => {
             this.exportDialog.show();
         });
-        // 删除原来的回车发送事件监听器，只保留一个键盘事件处理
-        chatInput === null || chatInput === void 0 ? void 0 : chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+        // // 删除原来的回车发送事件监听器，只保留一个键盘事件处理
+        // chatInput?.addEventListener('keydown', (e) => {
+        //     if (e.key === 'Enter' && e.ctrlKey) {
+        //         e.preventDefault();
+        //         sendMessage();
+        //     }
+        // });
         // 其他事件监听保持不变...
         chatInput === null || chatInput === void 0 ? void 0 : chatInput.addEventListener('input', () => {
             chatInput.style.height = 'auto';
@@ -319,7 +319,7 @@ class ChatView {
     handleKeyPress(event) {
         var _a;
         const chatInput = (_a = this.container) === null || _a === void 0 ? void 0 : _a.querySelector('#chatInput');
-        if (event.key === 'Enter' && event.altKey) {
+        if (event.key === 'Enter' && event.ctrlKey) {
             event.preventDefault(); // 阻止默认行为
             const message = chatInput === null || chatInput === void 0 ? void 0 : chatInput.value.trim();
             if (message) {

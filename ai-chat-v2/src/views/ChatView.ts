@@ -54,7 +54,7 @@ export class ChatView implements BaseView {
                     <div class="chat-hints">
                         <span class="hint-item">
                             <span class="material-icons">keyboard</span>
-                            Alt + Enter 发送消息
+                            Ctrl + Enter 发送消息
                         </span>
                     </div>
                     <div class="chat-actions">
@@ -168,13 +168,13 @@ export class ChatView implements BaseView {
             this.exportDialog.show();
         });
 
-        // 删除原来的回车发送事件监听器，只保留一个键盘事件处理
-        chatInput?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+        // // 删除原来的回车发送事件监听器，只保留一个键盘事件处理
+        // chatInput?.addEventListener('keydown', (e) => {
+        //     if (e.key === 'Enter' && e.ctrlKey) {
+        //         e.preventDefault();
+        //         sendMessage();
+        //     }
+        // });
 
         // 其他事件监听保持不变...
         chatInput?.addEventListener('input', () => {
@@ -346,7 +346,7 @@ export class ChatView implements BaseView {
 
     private handleKeyPress(event: KeyboardEvent): void {
         const chatInput = this.container?.querySelector('#chatInput') as HTMLTextAreaElement;
-        if (event.key === 'Enter' && event.altKey) {
+        if (event.key === 'Enter' && event.ctrlKey) {
             event.preventDefault(); // 阻止默认行为
             const message = chatInput?.value.trim();
             if (message) {
