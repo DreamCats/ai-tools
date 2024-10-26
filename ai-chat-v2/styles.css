@@ -581,7 +581,7 @@ button:hover {
     background: rgba(255, 255, 255, 0.5);
 }
 
-/* 在现有样式中添加 */
+/* 在现有样式中���加 */
 
 /* 加载动画 */
 @keyframes spin {
@@ -1331,4 +1331,58 @@ button:hover {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-5px); }
     75% { transform: translateX(5px); }
+}
+
+/* 模型配置对话框样式 */
+.model-config-dialog {
+    border: none;
+    border-radius: 12px;
+    padding: 0;
+    max-width: 400px;
+    width: 90%;
+}
+
+.model-config-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+}
+
+.config-form {
+    margin: 1.5rem 0;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+    font-size: 0.875rem;
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.config-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(203, 213, 225, 0.5);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1f2937;
+}
+
+.input-with-icon .icon-btn {
+    position: absolute;
+    right: 0.5rem;
+    background: transparent;
+}
+
+.input-with-icon .icon-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
 }

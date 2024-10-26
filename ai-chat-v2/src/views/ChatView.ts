@@ -13,6 +13,7 @@ import { IStorage } from '../interfaces/storage';  // 从 interfaces 目录导�
 import { ExportService } from '../services/ExportService';
 import { ExportDialog } from '../components/ExportDialog';
 import { ExportOptions } from '../services/ExportService';
+import { ModelConfigDialog } from '../components/ModelConfigDialog';
 
 export class ChatView implements BaseView {
     private aiService: AIService;
@@ -20,11 +21,13 @@ export class ChatView implements BaseView {
     private chatHistory: ChatHistoryManager;
     private roleConfigDialog: RoleConfigDialog;
     private tagSelectDialog: TagSelectDialog;
+    private modelConfigDialog: ModelConfigDialog; // 添加 ModelConfigDialog
     private storage: IStorage;
     private readonly STORAGE_KEY_ROLE = 'selected_role';
     private readonly STORAGE_KEY_MODEL = 'selected_model';
     private exportDialog: ExportDialog;
     private exportService: ExportService;
+    private readonly STORAGE_KEY_CHAT_HISTORY = 'chat_history';
     
     constructor() {
         this.storage = UToolsStorage.getInstance();
@@ -35,9 +38,13 @@ export class ChatView implements BaseView {
         this.tagSelectDialog = new TagSelectDialog(this.handleImportContent.bind(this));
         this.exportService = ExportService.getInstance();
         this.exportDialog = new ExportDialog(this.handleExport.bind(this));
+        this.modelConfigDialog = new ModelConfigDialog(this.aiService); // 初始化 ModelConfigDialog
         
         // 配置 marked
         configureMarked();
+
+        // 从存储中恢复聊天历史
+        this.restoreChatHistory();
     }
 
     private template = `
@@ -114,6 +121,14 @@ export class ChatView implements BaseView {
         // 初始化时更新角色选择列表并恢复上次选择
         this.updateRoleSelect();
         this.restoreSelections();
+
+        // 渲染已保存的聊天历史
+        const messagesContainer = container.querySelector('.message-list');
+        if (messagesContainer) {
+            this.chatHistory.getHistory().forEach(message => {
+                this.renderMessage(messagesContainer, message);
+            });
+        }
     }
 
     private restoreSelections(): void {
@@ -210,6 +225,12 @@ export class ChatView implements BaseView {
         roleConfigBtn?.addEventListener('click', () => {
             this.roleConfigDialog.show();
         });
+
+        // 添加模型设置按钮事件
+        const modelConfigBtn = this.container?.querySelector('#modelConfig');
+        modelConfigBtn?.addEventListener('click', () => {
+            this.modelConfigDialog.show();
+        });
     }
 
     private async handleSendMessage(message: string): Promise<void> {
@@ -260,6 +281,9 @@ export class ChatView implements BaseView {
         }
 
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // 在每次消息更新后保存聊天历史
+        this.storage.setItem(this.STORAGE_KEY_CHAT_HISTORY, this.chatHistory.getHistory());
     }
 
     private renderMessage(container: Element, message: ChatMessage): void {
@@ -317,6 +341,8 @@ export class ChatView implements BaseView {
         if (messagesContainer) {
             messagesContainer.innerHTML = '';
             this.chatHistory.clear();
+            // 清除存储的聊天历史
+            this.storage.removeItem(this.STORAGE_KEY_CHAT_HISTORY);
         }
     }
 
@@ -377,5 +403,12 @@ export class ChatView implements BaseView {
 
     private handleExport(options: ExportOptions): void {
         this.exportService.exportChat(this.chatHistory.getHistory(), options);
+    }
+
+    private restoreChatHistory(): void {
+        const savedHistory = this.storage.getItem<ChatMessage[]>(this.STORAGE_KEY_CHAT_HISTORY);
+        if (savedHistory) {
+            savedHistory.forEach(msg => this.chatHistory.addMessage(msg));
+        }
     }
 }

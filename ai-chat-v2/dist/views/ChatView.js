@@ -21,10 +21,12 @@ const TagSelectDialog_1 = require("../components/TagSelectDialog");
 const UToolsStorage_1 = require("../services/UToolsStorage");
 const ExportService_1 = require("../services/ExportService");
 const ExportDialog_1 = require("../components/ExportDialog");
+const ModelConfigDialog_1 = require("../components/ModelConfigDialog");
 class ChatView {
     constructor() {
         this.STORAGE_KEY_ROLE = 'selected_role';
         this.STORAGE_KEY_MODEL = 'selected_model';
+        this.STORAGE_KEY_CHAT_HISTORY = 'chat_history';
         this.template = `
         <div class="chat-container glass-effect">
             <!-- 聊天内容区 -->
@@ -97,8 +99,11 @@ class ChatView {
         this.tagSelectDialog = new TagSelectDialog_1.TagSelectDialog(this.handleImportContent.bind(this));
         this.exportService = ExportService_1.ExportService.getInstance();
         this.exportDialog = new ExportDialog_1.ExportDialog(this.handleExport.bind(this));
+        this.modelConfigDialog = new ModelConfigDialog_1.ModelConfigDialog(this.aiService); // 初始化 ModelConfigDialog
         // 配置 marked
         (0, marked_config_1.configureMarked)();
+        // 从存储中恢复聊天历史
+        this.restoreChatHistory();
     }
     render(container) {
         this.container = container;
@@ -107,6 +112,13 @@ class ChatView {
         // 初始化时更新角色选择列表并恢复上次选择
         this.updateRoleSelect();
         this.restoreSelections();
+        // 渲染已保存的聊天历史
+        const messagesContainer = container.querySelector('.message-list');
+        if (messagesContainer) {
+            this.chatHistory.getHistory().forEach(message => {
+                this.renderMessage(messagesContainer, message);
+            });
+        }
     }
     restoreSelections() {
         var _a, _b;
@@ -131,7 +143,7 @@ class ChatView {
         }
     }
     bindEvents() {
-        var _a;
+        var _a, _b;
         if (!this.container)
             return;
         const sendButton = this.container.querySelector('#sendMessage');
@@ -193,6 +205,11 @@ class ChatView {
         roleConfigBtn === null || roleConfigBtn === void 0 ? void 0 : roleConfigBtn.addEventListener('click', () => {
             this.roleConfigDialog.show();
         });
+        // 添加模型设置按钮事件
+        const modelConfigBtn = (_b = this.container) === null || _b === void 0 ? void 0 : _b.querySelector('#modelConfig');
+        modelConfigBtn === null || modelConfigBtn === void 0 ? void 0 : modelConfigBtn.addEventListener('click', () => {
+            this.modelConfigDialog.show();
+        });
     }
     handleSendMessage(message) {
         var _a;
@@ -239,6 +256,8 @@ class ChatView {
                 messagesContainer.appendChild(errorMessage);
             }
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            // 在每次消息更新后保存聊天历史
+            this.storage.setItem(this.STORAGE_KEY_CHAT_HISTORY, this.chatHistory.getHistory());
         });
     }
     renderMessage(container, message) {
@@ -292,6 +311,8 @@ class ChatView {
         if (messagesContainer) {
             messagesContainer.innerHTML = '';
             this.chatHistory.clear();
+            // 清除存储的聊天历史
+            this.storage.removeItem(this.STORAGE_KEY_CHAT_HISTORY);
         }
     }
     handleImportContent(content) {
@@ -348,6 +369,12 @@ class ChatView {
     }
     handleExport(options) {
         this.exportService.exportChat(this.chatHistory.getHistory(), options);
+    }
+    restoreChatHistory() {
+        const savedHistory = this.storage.getItem(this.STORAGE_KEY_CHAT_HISTORY);
+        if (savedHistory) {
+            savedHistory.forEach(msg => this.chatHistory.addMessage(msg));
+        }
     }
 }
 exports.ChatView = ChatView;

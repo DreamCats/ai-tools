@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AIService = void 0;
 class AIService {
     constructor(apiKey) {
-        this.baseUrl = 'https://api.gpt.ge/v1';
+        this.baseUrl = 'https://api.gpt.ge'; // 设置默认值
         this.defaultOptions = {
             model: 'gpt-4o-mini',
             temperature: 0.7,
@@ -39,7 +39,7 @@ class AIService {
             console.log('chat', allMessages);
             try {
                 const mergedOptions = Object.assign({}, this.defaultOptions);
-                const response = yield fetch(`${this.baseUrl}/chat/completions`, {
+                const response = yield fetch(`${this.baseUrl}/v1/chat/completions`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -75,6 +75,18 @@ class AIService {
     }
     updateOptions(options) {
         this.defaultOptions = Object.assign(Object.assign({}, this.defaultOptions), options);
+    }
+    updateConfig(config) {
+        this.apiKey = config.apiKey;
+        if (config.baseUrl) {
+            this.baseUrl = config.baseUrl;
+        }
+    }
+    getConfig() {
+        return {
+            apiKey: this.apiKey,
+            baseUrl: this.baseUrl
+        };
     }
 }
 exports.AIService = AIService;

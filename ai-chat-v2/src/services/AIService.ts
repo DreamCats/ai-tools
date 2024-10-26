@@ -1,8 +1,13 @@
 import { ChatMessage, ChatCompletionOptions, AIRole } from '../types/openai';
 
+interface AIConfig {
+    apiKey: string;
+    baseUrl?: string;
+}
+
 export class AIService {
     private apiKey: string;
-    private baseUrl: string = 'https://api.gpt.ge/v1';
+    private baseUrl: string = 'https://api.gpt.ge';  // 设置默认值
     private currentRole: AIRole;
     private defaultOptions: ChatCompletionOptions = {
         model: 'gpt-4o-mini',
@@ -36,7 +41,7 @@ export class AIService {
         console.log('chat', allMessages);
         try {
             const mergedOptions = { ...this.defaultOptions };
-            const response = await fetch(`${this.baseUrl}/chat/completions`, {
+            const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -75,5 +80,19 @@ export class AIService {
 
     public updateOptions(options: Partial<ChatCompletionOptions>): void {
         this.defaultOptions = { ...this.defaultOptions, ...options };
+    }
+
+    public updateConfig(config: AIConfig): void {
+        this.apiKey = config.apiKey;
+        if (config.baseUrl) {
+            this.baseUrl = config.baseUrl;
+        }
+    }
+
+    public getConfig(): AIConfig {
+        return {
+            apiKey: this.apiKey,
+            baseUrl: this.baseUrl
+        };
     }
 }
