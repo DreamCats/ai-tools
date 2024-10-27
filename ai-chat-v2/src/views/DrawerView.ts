@@ -147,8 +147,18 @@ export class DrawerView implements BaseView {
         this.renderDrawers(items);
     }
 
-    private handleSaveDrawer(item: Omit<DrawerItem, 'id' | 'createdAt' | 'updatedAt'>): void {
-        this.drawerService.addItem(item);
+    private handleSaveDrawer(
+        item: Omit<DrawerItem, 'id' | 'createdAt' | 'updatedAt'>, 
+        isEditMode?: boolean, 
+        itemId?: string
+    ): void {
+        if (isEditMode && itemId) {
+            // 编辑现有抽屉
+            this.drawerService.updateItem(itemId, item);
+        } else {
+            // 新建抽屉
+            this.drawerService.addItem(item);
+        }
         this.refreshDrawerList();
     }
 

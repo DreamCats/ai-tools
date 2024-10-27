@@ -41,7 +41,7 @@ export class AIService {
         console.log('chat', allMessages);
         try {
             const mergedOptions = { ...this.defaultOptions };
-            const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
+            let postData  = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -54,9 +54,12 @@ export class AIService {
                     max_tokens: mergedOptions.maxTokens,
                     top_p: mergedOptions.topP,
                     frequency_penalty: mergedOptions.frequencyPenalty,
-                    presence_penalty: mergedOptions.presencePenalty
+                    presence_penalty: mergedOptions.presencePenalty,
+                    stream: false
                 })
-            });
+            }
+            console.log("post data:", postData)
+            const response = await fetch(`${this.baseUrl}/v1/chat/completions`, postData);
 
             if (!response.ok) {
                 throw new Error(`API request failed: ${response.statusText}`);

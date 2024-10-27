@@ -507,7 +507,7 @@ button:hover {
     margin-top: 0.75rem;
 }
 
-/* 搜索容器样式调整 */
+/* 搜��容器样式调整 */
 .search-container {
     position: relative;
     flex: 1;
@@ -581,7 +581,7 @@ button:hover {
     background: rgba(255, 255, 255, 0.5);
 }
 
-/* 在现有样式中���加 */
+/* 在现有样式中加 */
 
 /* 加载动画 */
 @keyframes spin {
@@ -614,11 +614,12 @@ button:hover {
 /* Markdown 样式 */
 .ai-message .message-content {
     color: #1f2937;
-    line-height: 1.2;
+    line-height: 1.4;
 }
 
+/* 段落间距 */
 .ai-message .message-content p {
-    margin: 0.1rem 0; /* 减小段落间距 */
+    margin: 0.3rem 0; /* 减小段落间距 */
 }
 
 .ai-message .message-content p:first-child {
@@ -629,32 +630,50 @@ button:hover {
     margin-bottom: 0;
 }
 
+/* 标题间距 */
 .ai-message .message-content h1,
 .ai-message .message-content h2,
 .ai-message .message-content h3,
 .ai-message .message-content h4,
 .ai-message .message-content h5,
 .ai-message .message-content h6 {
-    margin: 0.2rem 0 0.1rem; /* 减小标题的上下边距 */
+    margin: 0.5rem 0 0.3rem; /* 减小标题的上下边距 */
 }
 
-.ai-message .message-content pre {
-    margin: 0.6rem 0; /* 代码块保持适当间距 */
-}
-
+/* 列表样式 */
 .ai-message .message-content ul,
 .ai-message .message-content ol {
-    margin: 0.05rem 0; /* 减小列表的上下边距 */
-    padding-left: 1rem; /* 稍微减小缩进 */
+    margin: 0.2rem 0; /* 减小列表的上下边距 */
+    padding-left: 1.2rem; /* 保持适当的缩进 */
+    padding-top: 0;    /* 移除顶部内边距 */
+    padding-bottom: 0; /* 移除底部内边距 */
 }
 
 .ai-message .message-content li {
-    margin: 0.05rem 0; /* 减小列表项的上下边距 */
+    margin: 0; /* 移除列表项的上下边距 */
+    padding: 0; /* 移除列表项的内边距 */
+    line-height: 1.4; /* 保持合适的行高 */
 }
 
-/* 代码块内部的间距也适当调整 */
+/* 确保列表项内的内容也保持紧凑 */
+.ai-message .message-content li p {
+    margin: 0; /* 移除列表项内段落的边距 */
+}
+
+/* 如果列表项内有嵌套列表，保持缩进但减少间距 */
+.ai-message .message-content li ul,
+.ai-message .message-content li ol {
+    margin: 0 0 0 1rem; /* 只保留左边距用于缩进 */
+}
+
+/* 代码块样式 */
+.ai-message .message-content pre {
+    margin: 0.5rem 0; /* 代码块保持适当间距 */
+}
+
 .ai-message .message-content pre code {
-    padding: 0.85rem; /* 减小代码块的内边距 */
+    padding: 0.75rem; /* 代码块内边距 */
+    line-height: 1.4;
 }
 
 /* 代码高亮主题 */
@@ -913,33 +932,53 @@ button:hover {
     display: flex;
     gap: 1rem;
     margin: 1rem 0;
-    height: 400px;
+    min-height: 400px; /* 改为最小高度 */
 }
 
 .editor-wrapper,
 .preview-wrapper {
     flex: 1;
-    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .drawer-textarea {
     width: 100%;
-    height: 100%;
+    min-height: 400px; /* 设置最小高度 */
     padding: 1rem;
     border: 1px solid rgba(203, 213, 225, 0.5);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.9);
-    resize: none;
+    resize: vertical; /* 允许垂直调整大小 */
     font-family: monospace;
+    flex-grow: 1;
 }
 
 .markdown-preview {
-    height: 100%;
+    width: 100%;
+    min-height: 200px;
     padding: 1rem;
     border: 1px solid rgba(203, 213, 225, 0.5);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.9);
     overflow-y: auto;
+    flex-grow: 1;
+    word-break: break-word; /* 添加这行 */
+}
+
+/* 添加预览中图片的样式 */
+.markdown-preview img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1rem auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 确保预览容器内的所有元素不会溢出 */
+.markdown-preview * {
+    max-width: 100%;
 }
 
 .tags-input-container {
@@ -1386,3 +1425,6 @@ button:hover {
 .input-with-icon .icon-btn:hover {
     background: rgba(0, 0, 0, 0.05);
 }
+
+
+

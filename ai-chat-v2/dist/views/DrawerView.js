@@ -135,8 +135,15 @@ class DrawerView {
         });
         this.renderDrawers(items);
     }
-    handleSaveDrawer(item) {
-        this.drawerService.addItem(item);
+    handleSaveDrawer(item, isEditMode, itemId) {
+        if (isEditMode && itemId) {
+            // 编辑现有抽屉
+            this.drawerService.updateItem(itemId, item);
+        }
+        else {
+            // 新建抽屉
+            this.drawerService.addItem(item);
+        }
         this.refreshDrawerList();
     }
     toggleDrawerExpand(drawerId) {
