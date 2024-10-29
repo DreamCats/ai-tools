@@ -1,0 +1,28 @@
+{
+    "name": "af0d6a79",
+    "pluginName": "字节研发搜索",
+    "description": "字节研发搜索",
+    "version": "v0.0.1",
+    "main": "dist/index.html",
+    "preload": "dist/preload.js",
+    "author": "DreamCats",
+    "homepage": "https://github.com/DreamCats",
+    "logo": "icon/lark-icon.png",
+    "features": [
+        {
+            "code": "byted",
+            "explain": "byted",
+            "cmds": [
+                "byted",
+                {
+                    "type": "over",
+                    "match": "/^[A-Za-z]+$/",
+                    "label": "psm",
+                    "minLength": 1,
+                    "maxLength": 500
+                }
+            ],
+            "icon": "icon/lark-icon.png"
+        }
+    ]
+}
