@@ -2,7 +2,7 @@ import { Psm, PsmList } from '../../domain/models/psm';
 import { Region, RegionList } from '../../domain/models/region';
 import { FormModal, FormField } from '../components/FormModal';
 import { StorageService } from '../../services/StorageService';
-import { Area, RegionsByArea, AreaLabels } from '../../domain/constants/area';
+import { Area, RegionsByArea, AreaLabels, RegionLabels } from '../../domain/constants/area';
 
 export class SettingsModal {
     private modal: HTMLElement;
@@ -274,7 +274,7 @@ export class SettingsModal {
             .filter(region => !existingRegions.has(region))
             .map(region => ({
                 value: region,
-                label: region
+                label: RegionLabels[region] || region
             }));
     }
 
@@ -317,8 +317,16 @@ export class SettingsModal {
                 value: region.name,
                 required: true,
                 options: [
-                    { value: region.name, label: region.name },
-                    ...this.getAvailableRegions(region.area, existingRegions)
+                    { 
+                        value: region.name, 
+                        label: RegionLabels[region.name] || region.name 
+                    },
+                    ...RegionsByArea[region.area]
+                        .filter(r => r !== region.name && !existingRegions.has(r))
+                        .map(r => ({
+                            value: r,
+                            label: RegionLabels[r] || r
+                        }))
                 ]
             },
             { 

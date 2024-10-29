@@ -233,7 +233,7 @@ class SettingsModal {
             .filter(region => !existingRegions.has(region))
             .map(region => ({
             value: region,
-            label: region
+            label: area_1.RegionLabels[region] || region
         }));
     }
     updateRegionOptions(area, existingRegions) {
@@ -270,8 +270,16 @@ class SettingsModal {
                 value: region.name,
                 required: true,
                 options: [
-                    { value: region.name, label: region.name },
-                    ...this.getAvailableRegions(region.area, existingRegions)
+                    {
+                        value: region.name,
+                        label: area_1.RegionLabels[region.name] || region.name
+                    },
+                    ...area_1.RegionsByArea[region.area]
+                        .filter(r => r !== region.name && !existingRegions.has(r))
+                        .map(r => ({
+                        value: r,
+                        label: area_1.RegionLabels[r] || r
+                    }))
                 ]
             },
             {

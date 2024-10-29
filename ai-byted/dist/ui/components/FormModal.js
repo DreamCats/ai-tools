@@ -41,11 +41,10 @@ class FormModal {
                         >
                             ${field.options.map(option => `
                                 <option 
-                                    value="${option.value}"
+                                    value="${this.escapeHtml(option.value)}"
                                     ${field.value === option.value ? 'selected' : ''}
                                 >
-                                    <span class="material-icons">${option.value}</span>
-                                    ${option.label}
+                                    ${this.escapeHtml(option.label)}
                                 </option>
                             `).join('')}
                         </select>
@@ -61,11 +60,16 @@ class FormModal {
                     type="${field.type}" 
                     id="${field.id}" 
                     name="${field.id}"
-                    ${field.value ? `value="${field.value}"` : ''}
+                    ${field.value ? `value="${this.escapeHtml(field.value)}"` : ''}
                     ${field.required ? 'required' : ''}
                 >
             </div>
         `;
+    }
+    escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
     attachEventListeners(modal) {
         const form = modal.querySelector('form');

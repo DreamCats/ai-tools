@@ -9,9 +9,9 @@ exports.FunctionUrls = {
         requiresPsm: true
     },
     'tce': {
-        baseUrl: "https://cloud-{area}.bytedance.net/tce/overview?region={region}&psm={psm}",
+        baseUrl: "https://cloud-{area}.bytedance.net/tce/services?&page=1&subs_prefer=true&type=all&keyword={psm}",
         requiresArea: true,
-        requiresRegion: true,
+        requiresRegion: false,
         requiresPsm: true
     },
     'tcc': {

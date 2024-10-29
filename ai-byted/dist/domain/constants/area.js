@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AreaLabels = exports.RegionsByArea = exports.Area = void 0;
+exports.RegionLabels = exports.AreaLabels = exports.RegionsByArea = exports.Area = void 0;
 var Area;
 (function (Area) {
     Area["CN"] = "cn";
@@ -19,4 +19,18 @@ exports.AreaLabels = {
     [Area.US_TTP]: "美国",
     [Area.EU_TTP]: "欧洲",
     [Area.I18]: "国际"
+};
+exports.RegionLabels = {
+    "China-East": "China-East",
+    "China-North": "China-North",
+    "China-PPE": "China-PPE",
+    "US-TTP": "US-TTP",
+    "US-TTP-PPE": "US-TTP PPE",
+    "US-TTP2": "US-TTP2",
+    "EU-TTP": "EU-TTP",
+    "EU-TTP-PPE": "EU-TTP PPE",
+    "EU-TTP2": "EU-TTP2",
+    "Singapore-Central": "Singapore-Central",
+    "US-East": "US-East",
+    "Singapore-PPE": "Singapore-PPE"
 };

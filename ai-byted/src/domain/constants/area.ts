@@ -17,4 +17,19 @@ export const AreaLabels: Record<Area, string> = {
     [Area.US_TTP]: "美国",
     [Area.EU_TTP]: "欧洲",
     [Area.I18]: "国际"
+};
+
+export const RegionLabels: Record<string, string> = {
+    "China-East": "China-East",
+    "China-North": "China-North",
+    "China-PPE": "China-PPE",
+    "US-TTP": "US-TTP",
+    "US-TTP-PPE": "US-TTP PPE",
+    "US-TTP2": "US-TTP2",
+    "EU-TTP": "EU-TTP",
+    "EU-TTP-PPE": "EU-TTP PPE",
+    "EU-TTP2": "EU-TTP2",
+    "Singapore-Central": "Singapore-Central",
+    "US-East": "US-East",
+    "Singapore-PPE": "Singapore-PPE"
 }; 
