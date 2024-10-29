@@ -221,7 +221,22 @@ class SearchApp {
                 const area = icon.getAttribute('data-area');
                 const psm = icon.getAttribute('data-psm');
                 
-                console.log('List region click:', { functionName, region, area, psm });
+                const psmItem = this.psmList.find(item => item.title === psm);
+                if (psmItem) {
+                    psmItem.clicks += 1;
+                    psmItem.timestamp = Date.now();
+                    
+                    if (functionName) {
+                        psmItem.lastClickedFunction = {
+                            title: functionName,
+                            timestamp: Date.now()
+                        };
+                    }
+                    
+                    StorageService.setItem('psmList', this.psmList);
+                    
+                    this.showPsmList();
+                }
 
                 if (functionName && region && area && psm) {
                     const url = UrlService.buildUrl(functionName, {
@@ -346,14 +361,37 @@ class SearchApp {
                 const functionName = chip.getAttribute('data-function');
                 const region = chip.getAttribute('data-region');
                 const area = chip.getAttribute('data-area');
+                const psmId = chip.getAttribute('data-psm-id');
                 
-                console.log('Click event triggered:', { functionName, region, area, psmTitle: psm?.title });
+                if (psmId) {
+                    const psmItem = this.psmList.find(p => p.id === psmId);
+                    if (psmItem && functionName) {
+                        psmItem.clicks += 1;
+                        psmItem.timestamp = Date.now();
+                        
+                        psmItem.lastClickedFunction = {
+                            title: functionName,
+                            timestamp: Date.now()
+                        };
+                        
+                        const functions = this.functionList.getByPsmId(psmId);
+                        const func = functions.find(f => f.title.toLowerCase() === functionName.toLowerCase());
+                        if (func) {
+                            this.functionList.incrementClicks(func.id);
+                            StorageService.setItem('functionList', this.functionList.getAll());
+                        }
+                        
+                        StorageService.setItem('psmList', this.psmList);
+                        
+                        this.showFunctionList(psmId);
+                    }
+                }
 
-                if (functionName && region && area && psm) {
+                if (functionName && region && area && psmId) {
                     const url = UrlService.buildUrl(functionName, {
                         area: area,
                         region: region,
-                        psm: psm.title
+                        psm: psmId
                     });
 
                     console.log('Generated URL:', url);
@@ -388,6 +426,7 @@ class SearchApp {
                                       data-function="${this.escapeHtml(func.title)}"
                                       data-region="${this.escapeHtml(region.name)}"
                                       data-area="${this.escapeHtml(region.area)}"
+                                      data-psm-id="${this.currentPsmId}"
                                       onclick="event.stopPropagation()">
                                     <span class="material-icons">${this.escapeHtml(region.icon)}</span>
                                 </span>
@@ -398,6 +437,7 @@ class SearchApp {
                                   data-function="${this.escapeHtml(func.title)}"
                                   data-region="China"
                                   data-area="cn"
+                                  data-psm-id="${this.currentPsmId}"
                                   onclick="event.stopPropagation()">
                                 <span class="material-icons">${DEFAULT_REGION.icon}</span>
                             </span>

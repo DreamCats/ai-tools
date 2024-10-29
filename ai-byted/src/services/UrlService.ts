@@ -1,10 +1,12 @@
 import { Area } from '../domain/constants/area';
+import { GetScmName } from '../utils/psmUtils';
 
 export interface UrlConfig {
     baseUrl: string;
     requiresArea?: boolean;
     requiresRegion?: boolean;
     requiresPsm?: boolean;
+    psmTransform?: (psm: string) => string;
 }
 
 export const FunctionUrls: Record<string, UrlConfig> = {
@@ -21,11 +23,36 @@ export const FunctionUrls: Record<string, UrlConfig> = {
         requiresPsm: true
     },
     'tcc': {
-        baseUrl: "https://cloud-{area}.bytedance.net/tcc/overview?region={region}&psm={psm}",
+        baseUrl: "https://cloud-{area}.bytedance.net/tcc/search?q={psm}",
+        requiresArea: true,
+        requiresRegion: false,
+        requiresPsm: true
+    },
+    'nepture': {
+        baseUrl: "https://cloud-{area}.bytedance.net/neptune/interfaceTest?_env=prod&_zone={region}&_psm={psm}",
         requiresArea: true,
         requiresRegion: true,
         requiresPsm: true
-    }
+    },
+    'faas': {
+        baseUrl: "https://cloud-{area}.bytedance.net/faas/?page=1&type=all&search={psm}",
+        requiresArea: true,
+        requiresRegion: false,
+        requiresPsm: true
+    },
+    'scm': {
+        baseUrl: "https://cloud-{area}.bytedance.net/scm/all?page=1&language=&page_size=10&search={psm}",
+        requiresArea: true,
+        requiresRegion: false,
+        requiresPsm: true,
+        psmTransform: GetScmName
+    },
+    'api': {
+        baseUrl: "https://cloud-{area}.bytedance.net/bam/rd/{psm}",
+        requiresArea: true,
+        requiresRegion: false,
+        requiresPsm: true
+    },
 };
 
 export class UrlService {
@@ -64,7 +91,13 @@ export class UrlService {
         }
         
         if (params.region) url = url.replace('{region}', params.region);
-        if (params.psm) url = url.replace('{psm}', params.psm);
+        
+        if (params.psm) {
+            const transformedPsm = config.psmTransform 
+                ? config.psmTransform(params.psm) 
+                : params.psm;
+            url = url.replace('{psm}', transformedPsm);
+        }
 
         console.log('Generated URL:', url);
         return url;
