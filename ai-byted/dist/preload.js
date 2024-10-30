@@ -14,9 +14,13 @@ class SearchApp {
         this.psmList = [];
         this.regionList = [];
         this.functionList = new function_1.FunctionList();
-        this.searchLimit = 20;
+        this.searchLimit = 50;
         this.currentPsmId = null;
         this.timeInterval = null;
+        this.currentFocusIndex = -1;
+        this.items = [];
+        this.currentRegionIndex = -1;
+        this.regionItems = [];
         this.searchInput = document.getElementById('searchInput');
         this.listContainer = document.getElementById('listContainer');
         this.settingsBtn = document.getElementById('settingsBtn');
@@ -29,10 +33,22 @@ class SearchApp {
         this.bottomBar.className = 'bottom-bar';
         (_a = document.querySelector('.container')) === null || _a === void 0 ? void 0 : _a.appendChild(this.bottomBar);
         this.initializeBottomBar();
+        // 添加键盘事件监听
+        document.addEventListener('keydown', (e) => this.handleKeyboardNavigation(e));
     }
     initializeEventListeners() {
         this.searchInput.addEventListener('input', () => this.handleSearch());
         this.settingsBtn.addEventListener('click', () => this.openSettings());
+    }
+    handleSearchKeydown(e) {
+        // 如果在二级列表页面，且搜索框为空，按下 Backspace 键时返回上一页
+        if (e.key === 'Backspace' &&
+            this.searchInput.value === '' &&
+            this.currentPsmId !== null) {
+            e.preventDefault();
+            this.currentPsmId = null;
+            this.showPsmList();
+        }
     }
     loadInitialData() {
         try {
@@ -57,9 +73,9 @@ class SearchApp {
         }
         this.searchTimeout = window.setTimeout(() => {
             const searchValue = this.searchInput.value.trim();
-            const specialPattern = /([A-F\d]{34})|(\d{15}[\da-f]{38})/;
-            if (specialPattern.test(searchValue)) {
-                this.showSpecialCard(searchValue);
+            const logIdPattern = /([A-F\d]{34})|(\d{15}[\da-f]{38})/;
+            if (logIdPattern.test(searchValue)) {
+                this.showLogIdCard(searchValue);
                 return;
             }
             this.filterAndShowResults(searchValue);
@@ -122,6 +138,8 @@ class SearchApp {
             .sort((a, b) => b.timestamp - a.timestamp)
             .slice(0, this.searchLimit);
         this.renderList(sortedItems);
+        // 聚焦到搜索框
+        this.searchInput.focus();
     }
     renderList(items) {
         this.listContainer.innerHTML = items.map(item => {
@@ -222,6 +240,7 @@ class SearchApp {
                 }
             });
         });
+        this.clearFocus();
     }
     handlePsmClick(psmId) {
         const psm = this.psmList.find(p => p.id === psmId);
@@ -326,27 +345,35 @@ class SearchApp {
                             StorageService_1.StorageService.setItem('functionList', this.functionList.getAll());
                         }
                         StorageService_1.StorageService.setItem('psmList', this.psmList);
+                        if (region && area) {
+                            const url = UrlService_1.UrlService.buildUrl(functionName, {
+                                area: area,
+                                region: region,
+                                psm: psmItem.title
+                            });
+                            console.log('Generated URL:', url);
+                            if (url) {
+                                try {
+                                    ExternalService_1.ExternalService.openUrl(url);
+                                }
+                                catch (error) {
+                                    console.error('Failed to open URL:', error);
+                                }
+                            }
+                        }
                         this.showFunctionList(psmId);
-                    }
-                }
-                if (functionName && region && area && psmId) {
-                    const url = UrlService_1.UrlService.buildUrl(functionName, {
-                        area: area,
-                        region: region,
-                        psm: psmId
-                    });
-                    console.log('Generated URL:', url);
-                    if (url) {
-                        try {
-                            ExternalService_1.ExternalService.openUrl(url);
-                        }
-                        catch (error) {
-                            console.error('Failed to open URL:', error);
-                        }
                     }
                 }
             });
         });
+        // 清除之前的焦点状态
+        this.clearFocus();
+        // 初始化导航并聚焦第一个卡片
+        this.initializeNavigation();
+        if (this.items.length > 0) {
+            this.currentFocusIndex = 0;
+            this.updateFocus();
+        }
     }
     renderFunctionCard(func) {
         const shouldShowRegions = ['argos', 'tce', 'tcc'].includes(func.title.toLowerCase());
@@ -448,13 +475,219 @@ class SearchApp {
         this.bottomBar.innerHTML = `
             <div class="author">
                 <span class="material-icons">person</span>
-                <span>作者：maimai</span>
+                <span>作者：maimai，有问题lark联系：maifeng@bytedance.com</span>
             </div>
             <div class="time">
                 <span class="material-icons">schedule</span>
                 <span>${timeStr}</span>
             </div>
         `;
+    }
+    showLogIdCard(logId) {
+        const logIdItem = {
+            title: logId,
+            timestamp: Date.now()
+        };
+        this.listContainer.innerHTML = `
+            <div class="logid-card">
+                <div class="logid-content">
+                    <div class="logid-title">${this.escapeHtml(logIdItem.title)}</div>
+                    <div class="region-list">
+                        ${this.regionList.map(region => `
+                            <span class="region-chip logid-region" 
+                                  data-tooltip="${this.escapeHtml(region.name)}"
+                                  data-region="${this.escapeHtml(region.name)}"
+                                  data-area="${this.escapeHtml(region.area)}"
+                                  data-logid="${this.escapeHtml(logIdItem.title)}"
+                                  onclick="event.stopPropagation()">
+                                <span class="material-icons">${this.escapeHtml(region.icon)}</span>
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="logid-meta">
+                    <span>${this.formatDate(logIdItem.timestamp)}</span>
+                </div>
+            </div>
+        `;
+        this.listContainer.querySelectorAll('.logid-region').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const region = chip.getAttribute('data-region');
+                const area = chip.getAttribute('data-area');
+                const logId = chip.getAttribute('data-logid');
+                if (region && area && logId) {
+                    const url = UrlService_1.UrlService.buildUrl('logid', {
+                        area: area,
+                        region: region,
+                        logId: logId
+                    });
+                    console.log('Generated LogID URL:', url);
+                    if (url) {
+                        try {
+                            ExternalService_1.ExternalService.openUrl(url);
+                        }
+                        catch (error) {
+                            console.error('Failed to open URL:', error);
+                        }
+                    }
+                }
+            });
+        });
+        this.clearFocus();
+    }
+    handleKeyboardNavigation(e) {
+        // 如果正在输入搜索内容，不处理导航
+        if (document.activeElement === this.searchInput) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                this.initializeNavigation();
+            }
+            return;
+        }
+        switch (e.key) {
+            case 'Tab':
+                e.preventDefault();
+                this.clearRegionFocus();
+                if (e.shiftKey) {
+                    this.focusPreviousItem();
+                }
+                else {
+                    this.focusNextItem();
+                }
+                break;
+            case 'Backspace':
+                // 如果当前在二级列表且有卡片被聚焦，则返回上一页
+                if (this.currentPsmId !== null && this.currentFocusIndex >= 0) {
+                    e.preventDefault();
+                    this.currentPsmId = null;
+                    this.showPsmList();
+                    // 回退时聚焦到搜索框
+                    this.searchInput.focus();
+                }
+                break;
+            case 'ArrowLeft':
+            case 'ArrowRight':
+                if (this.currentFocusIndex >= 0) {
+                    const currentCard = this.items[this.currentFocusIndex];
+                    // 如果当前没有 region 焦点，初始化 region 导航
+                    if (this.currentRegionIndex === -1) {
+                        this.initializeRegionNavigation(currentCard);
+                    }
+                    if (this.regionItems.length > 0) {
+                        e.preventDefault();
+                        if (e.key === 'ArrowLeft') {
+                            this.focusPreviousRegion();
+                        }
+                        else {
+                            this.focusNextRegion();
+                        }
+                    }
+                }
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (this.currentRegionIndex >= 0 && this.regionItems.length > 0) {
+                    this.regionItems[this.currentRegionIndex].click();
+                }
+                else if (this.currentFocusIndex >= 0) {
+                    this.items[this.currentFocusIndex].click();
+                }
+                break;
+            case 'Escape':
+                this.clearFocus();
+                this.clearRegionFocus();
+                this.searchInput.focus();
+                break;
+        }
+    }
+    initializeNavigation() {
+        this.items = Array.from(this.listContainer.querySelectorAll('.list-item, .function-card'));
+        if (this.items.length > 0 && this.currentFocusIndex === -1) {
+            this.currentFocusIndex = 0;
+            this.updateFocus();
+        }
+    }
+    initializeRegionNavigation(parentElement) {
+        this.regionItems = Array.from(parentElement.querySelectorAll('.region-chip, .mini-region-icon, .logid-region'));
+        if (this.regionItems.length > 0) {
+            this.currentRegionIndex = -1;
+        }
+    }
+    focusNextItem() {
+        if (this.items.length === 0) {
+            this.initializeNavigation();
+            return;
+        }
+        this.currentFocusIndex = (this.currentFocusIndex + 1) % this.items.length;
+        this.updateFocus();
+    }
+    focusPreviousItem() {
+        if (this.items.length === 0) {
+            this.initializeNavigation();
+            return;
+        }
+        this.currentFocusIndex = (this.currentFocusIndex - 1 + this.items.length) % this.items.length;
+        this.updateFocus();
+    }
+    focusNextRegion() {
+        if (this.regionItems.length === 0)
+            return;
+        this.currentRegionIndex = this.currentRegionIndex === -1 ?
+            0 : (this.currentRegionIndex + 1) % this.regionItems.length;
+        this.updateRegionFocus();
+    }
+    focusPreviousRegion() {
+        if (this.regionItems.length === 0)
+            return;
+        this.currentRegionIndex = this.currentRegionIndex === -1 ?
+            0 : (this.currentRegionIndex - 1 + this.regionItems.length) % this.regionItems.length;
+        this.updateRegionFocus();
+    }
+    updateFocus() {
+        this.items.forEach((item, index) => {
+            if (index === this.currentFocusIndex) {
+                item.classList.add('keyboard-focus');
+                item.setAttribute('tabindex', '0');
+                item.focus();
+                // 不再自动初始化 region 导航
+                this.clearRegionFocus();
+            }
+            else {
+                item.classList.remove('keyboard-focus');
+                item.setAttribute('tabindex', '-1');
+            }
+        });
+    }
+    updateRegionFocus() {
+        this.regionItems.forEach((item, index) => {
+            if (index === this.currentRegionIndex) {
+                item.classList.add('keyboard-focus');
+                item.setAttribute('tabindex', '0');
+                item.focus();
+            }
+            else {
+                item.classList.remove('keyboard-focus');
+                item.setAttribute('tabindex', '-1');
+            }
+        });
+    }
+    clearFocus() {
+        this.currentFocusIndex = -1;
+        this.items.forEach(item => {
+            item.classList.remove('keyboard-focus');
+            item.setAttribute('tabindex', '-1');
+        });
+        this.clearRegionFocus();
+    }
+    clearRegionFocus() {
+        this.currentRegionIndex = -1;
+        this.regionItems = [];
+        this.regionItems.forEach(item => {
+            item.classList.remove('keyboard-focus');
+            item.setAttribute('tabindex', '-1');
+        });
     }
     // 在组件销毁时清理定时器
     destroy() {

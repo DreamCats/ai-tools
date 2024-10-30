@@ -12,7 +12,7 @@ exports.RegionsByArea = {
     [Area.CN]: ["China-East", "China-North", "China-PPE"],
     [Area.US_TTP]: ["US-TTP", "US-TTP-PPE", "US-TTP2"],
     [Area.EU_TTP]: ["EU-TTP", "EU-TTP-PPE", "EU-TTP2"],
-    [Area.I18]: ["Singapore-Central", "US-East", "Singapore-PPE"]
+    [Area.I18]: ["Singapore-Central", "US-East", "Singapore-PPE", "US-West", "US-Central", "US-SouthWest", "Africa-South", "Asia-NorthEast"]
 };
 exports.AreaLabels = {
     [Area.CN]: "中国",
@@ -32,5 +32,10 @@ exports.RegionLabels = {
     "EU-TTP2": "EU-TTP2",
     "Singapore-Central": "Singapore-Central",
     "US-East": "US-East",
-    "Singapore-PPE": "Singapore-PPE"
+    "Singapore-PPE": "Singapore-PPE",
+    "US-West": "US-West",
+    "US-Central": "US-Central",
+    "US-SouthWest": "US-SouthWest",
+    "Africa-South": "Africa-South",
+    "Asia-NorthEast": "Asia-NorthEast"
 };

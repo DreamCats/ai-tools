@@ -74,12 +74,12 @@ class SettingsModal {
                     <div class="settings-section">
                         <h3>其他设置</h3>
                         <label class="setting-item">
-                            <span>PSM 补全功能</span>
+                            <span>PSM 补全功能（未开发）</span>
                             <input type="checkbox" id="psmAutoComplete">
                         </label>
                         <label class="setting-item">
                             <span>搜索结果数量限制</span>
-                            <input type="number" id="searchLimit" value="20" min="1" max="100">
+                            <input type="number" id="searchLimit" value="50" min="1" max="100">
                         </label>
                     </div>
                 </div>

@@ -46,6 +46,12 @@ exports.FunctionUrls = {
         requiresRegion: false,
         requiresPsm: true
     },
+    'logid': {
+        baseUrl: "https://cloud-{area}.bytedance.net/argos/streamlog/info_overview/log_id_search?region={region}&logId={logId}",
+        requiresArea: true,
+        requiresRegion: true,
+        requiresLogId: true
+    },
 };
 class UrlService {
     static buildUrl(functionName, params) {
@@ -68,6 +74,10 @@ class UrlService {
             console.log('Missing required psm parameter');
             return null;
         }
+        if (config.requiresLogId && !params.logId) {
+            console.log('Missing required logId parameter');
+            return null;
+        }
         if (params.area) {
             url = params.area.toLowerCase() === 'cn'
                 ? url.replace('-{area}', '')
@@ -80,6 +90,9 @@ class UrlService {
                 ? config.psmTransform(params.psm)
                 : params.psm;
             url = url.replace('{psm}', transformedPsm);
+        }
+        if (params.logId) {
+            url = url.replace('{logId}', params.logId);
         }
         console.log('Generated URL:', url);
         return url;
