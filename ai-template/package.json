@@ -1,0 +1,23 @@
+{
+  "name": "demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/mousetrap": "^1.6.3",
+    "axios": "^0.21.2",
+    "moment": "^2.29.4",
+    "mousetrap": "^1.6.5",
+    "utools-helper": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^15.12.4",
+    "@types/throttle-debounce": "^2.1.0",
+    "utools-api-types": "^2.0.3"
+  }
+}

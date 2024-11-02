@@ -1,0 +1,28 @@
+{
+  "name": "af0d6a79",
+  "pluginName": "ai畅聊知识库",
+  "description": "ai畅聊知识库",
+  "version": "v0.0.1",
+  "main": "dist/index.html",
+  "preload": "dist/preload.js",
+  "author": "DreamCats",
+  "homepage": "https://github.com/DreamCats",
+  "logo": "./icon/chat.png",
+  "features": [
+    {
+      "code": "chat",
+      "explain": "chat",
+      "cmds": [
+        "chat",
+        {
+          "type": "over",
+          "match": "",
+          "label": "chat",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      ],
+      "icon": "./icon/chat.png"
+    }
+  ]
+}
