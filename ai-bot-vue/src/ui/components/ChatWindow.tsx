@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from './GlassCard';
-import { Message, ChatSession } from '../../domain/chat';
+import { ChatSession } from '../../domain/chat';
 import { Theme } from '../../domain/theme/types';
 import { ExportButton } from './ExportButton';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
-const ChatContainer = styled(GlassCard)<{ theme: Theme }>`
+const ChatContainer = styled(GlassCard)<{ theme: Theme; isMobile?: boolean }>`
   width: 80%;
   max-width: 800px;
   height: 70vh;
@@ -16,24 +16,22 @@ const ChatContainer = styled(GlassCard)<{ theme: Theme }>`
   background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.border};
   transition: all 0.3s ease;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    height: calc(100vh - 20px);
+    border-radius: 0;
+  }
 `;
 
 const MessageList = styled.div<{ theme: Theme }>`
   flex: 1;
   overflow-y: auto;
   padding: 20px;
+  -webkit-overflow-scrolling: touch;
 
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: ${({ theme }) => theme.colors.border};
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => theme.colors.textSecondary};
-    border-radius: 3px;
+  @media (max-width: 768px) {
+    padding: 10px;
   }
 `;
 
@@ -85,6 +83,10 @@ const BubbleContent = styled.div<{ isUser: boolean; theme: Theme }>`
       ? `border-left: 8px solid ${theme.colors.userBubble};`
       : `border-right: 8px solid ${theme.colors.botBubble};`}
   }
+
+  @media (max-width: 768px) {
+    max-width: 85%;
+  }
 `;
 
 const InputArea = styled.div<{ theme: Theme }>`
@@ -116,6 +118,10 @@ const Input = styled.textarea<{ theme: Theme }>`
 
   &::placeholder {
     color: ${({ theme }) => theme.colors.textSecondary};
+  }
+
+  @media (max-width: 768px) {
+    font-size: 16px;
   }
 `;
 
@@ -388,6 +394,7 @@ interface ChatWindowProps {
   session: ChatSession;
   onSendMessage: (content: string) => void;
   isLoading: boolean;
+  isMobile?: boolean;
 }
 
 const messageVariants = {
@@ -436,7 +443,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   theme,
   session,
   onSendMessage,
-  isLoading 
+  isLoading,
+  isMobile = false
 }) => {
   const [input, setInput] = React.useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -467,7 +475,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   return (
-    <ChatContainer theme={theme}>
+    <ChatContainer theme={theme} isMobile={isMobile}>
       <div style={{ 
         padding: '10px 20px',
         borderBottom: `1px solid ${theme.colors.border}`,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { ThemeProvider } from '@emotion/react';
 import { ChatWindow } from './ui/components/ChatWindow';
@@ -10,6 +10,8 @@ import { Message, ChatSession } from './domain/chat';
 import { Theme, lightTheme, darkTheme } from './domain/theme/types';
 import { ChatService } from './domain/chat/ChatService';
 import { Toast } from './ui/components/Toast';
+import { AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const AppContainer = styled.div<{ theme: Theme }>`
   min-height: 100vh;
@@ -17,6 +19,11 @@ const AppContainer = styled.div<{ theme: Theme }>`
   background: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.text};
   transition: all 0.3s ease;
+  position: relative;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
 const MainContent = styled.div`
@@ -25,6 +32,26 @@ const MainContent = styled.div`
   justify-content: center;
   align-items: center;
   padding: 20px;
+
+  @media (max-width: 768px) {
+    padding: 10px;
+  }
+`;
+
+const MobileOverlay = styled(motion.div)<{ theme: Theme }>`
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 90;
+  backdrop-filter: blur(4px);
+
+  @media (max-width: 768px) {
+    display: block;
+  }
 `;
 
 const App: React.FC = () => {
@@ -44,9 +71,25 @@ const App: React.FC = () => {
   } = useChatStore();
   
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isSessionListVisible, setIsSessionListVisible] = useState(true);
   
   const theme = themeMode === 'light' ? lightTheme : darkTheme;
   const currentSession = sessions.find(s => s.id === currentSessionId);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      // 在移动端时总是显示主内容
+      if (window.innerWidth <= 768) {
+        setIsSessionListVisible(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // 初始化时调用一次
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleNewSession = () => {
     const newSession: ChatSession = {
@@ -154,15 +197,41 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <AppContainer theme={theme}>
-        <SessionList
-          theme={theme}
-          sessions={sessions}
-          currentSessionId={currentSessionId}
-          onSelectSession={setCurrentSession}
-          onNewSession={handleNewSession}
-          onDeleteSession={deleteSession}
-          onRenameSession={renameSession}
-        />
+        <AnimatePresence>
+          {isSessionListVisible && (
+            <MobileOverlay
+              theme={theme}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSessionListVisible(false)}
+            />
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          <SessionList
+            theme={theme}
+            sessions={sessions}
+            currentSessionId={currentSessionId}
+            onSelectSession={(id) => {
+              setCurrentSession(id);
+              if (isMobile) {
+                setIsSessionListVisible(false);
+              }
+            }}
+            onNewSession={() => {
+              handleNewSession();
+              if (isMobile) {
+                setIsSessionListVisible(false);
+              }
+            }}
+            onDeleteSession={deleteSession}
+            onRenameSession={renameSession}
+            isMobile={isMobile}
+            isVisible={isSessionListVisible}
+            onToggleVisibility={() => setIsSessionListVisible(!isSessionListVisible)}
+          />
+        </AnimatePresence>
         <MainContent>
           {currentSession ? (
             <ChatWindow
@@ -170,6 +239,7 @@ const App: React.FC = () => {
               session={currentSession}
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
+              isMobile={isMobile}
             />
           ) : (
             <div>请选择或创建一个会话</div>
